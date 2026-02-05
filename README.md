@@ -1,190 +1,425 @@
-# Bind: A Privacy-Preserving Data Verification Protocol
-**Bind** is a privacy-first decentralized data verification protocol that enables data issuers to publish attestations once—as cryptographic commitments—and allows holders to prove ownership and specific data points using zero-knowledge proofs, without revealing underlying sensitive information.  Initial POC was completed on zkVerify; long-term deployment target is Aztec, a privacy-preserving rollup on Ethereum, once production-ready.
+# Bind Protocol
+**Privacy-Preserving Attestation for the Data Economy**
 
-**Key Innovations:**
-1. **Privacy by design**: Only data commitments (hashes) appear on-chain; sensitive information remains off-chain.  
-2. **Selective disclosure**: Holders choose exactly which data fields to reveal for each use case.  
-3. **Envelope-based issuance**: Issuers can issue attestations without knowing the holder's wallet address, maximizing privacy.  
-4. **Schema-agnostic**: Supports ANY structured data (identity documents, credentials, supply chain records, sensor data, attestations, etc.).  
-5. **Selective disclosure with cryptographic proofs**: Using Noir circuits, holders can prove possession of data without revealing sensitive fields.  
+January 2026
+Michael Kerr, Jason Child
 
-## 1. Introduction and Motivation
-### 1.1 The Problem
-Today, data verification is fragmented and costly:
-- **Privacy erosion**: Each verification exposes sensitive data to new entities, increasing breach risk. Users are repeatedly asked to hand over the same documents and personal details (IDs, bank statements, payslips, medical records), and every new copy becomes another place it can be lost or stolen.
-- **Unlimited copies of sensitive data**: In the name of KYC, onboarding, compliance, and background checks, the same identity and financial information is collected and stored by dozens of different organizations. Each system has its own security posture, retention policy, and access controls, so a single person's most sensitive information ends up scattered across many systems that they do not control.
-- **Limited provenance**: There is no cryptographic proof of data origin or authenticity without revealing all details. Verifiers often must "see everything" to trust anything.
-- **Repeated verification**: Users must repeatedly verify the same data points across different platforms and applications. A degree, employment history, or government ID is re-checked over and over instead of being proven once and reused.
-- **Operational cost**: Repeated backend verification and data audits are expensive and operationally burdensome. Institutions maintain custom verification workflows, support teams, and manual processes for tasks that are conceptually identical.
-- **Vendor lock-in**: Verified data is trapped within the platform that issued or collected it, preventing reuse across different services and applications. Each new platform restarts the verification process from scratch, further spreading sensitive data into additional systems.
+---
+## Executive Summary
+Organizations face a fundamental problem: proving facts about their data requires exposing sensitive information, creating privacy risks, compliance burdens, and competitive disadvantages.
 
-### 1.2 The Solution
-**Bind** solves these problems by:
-1. **Anchoring attestations on a verification chain** as privacy-preserving commitments, making them reusable across applications.  
-2. **Using zero-knowledge proofs** for selective disclosure, so holders prove "I have data point X" without revealing sensitive details.  
-3. **Supporting envelope-based issuance**, allowing issuers and holders to interact privately before any wallet address is revealed.  
-4. **Enabling any schema**, from identity documents to supply chain records to employment history and sensor data.  
-5. **Optimizing costs** via external verification and aggregation, amortizing verification costs across many use cases.  
+**Bind Protocol** solves this through **zero-knowledge attestations**—cryptographic proofs that verify claims about data without revealing the underlying information.
 
-### 1.3 Why Bind Is Different
-Bind stands out in several ways:
-- **Privacy-first**: Built from the ground up to minimize data exposure, not as an add-on. Only cryptographic fingerprints and minimal metadata live on-chain; raw data never does.
-- **Universal**: It works for any structured data across industries (education, employment, supply chain, medical, government, IoT, property, and beyond).
-- **Reusable**: Verify once, reuse many times, across many applications and platforms. One attestation, infinite use cases.
-- **Decentralized**: Eventual goal is to be governed by a DAO and public smart contracts, not a single company. Community decides which schemas, issuers, and governance rules apply.
-- **Integration-friendly**: Works with both Web3 and Web2 systems using standard APIs. Existing infrastructure can adopt Bind without major changes.
-- **Holder-controlled**: The holder's device is the locus of control. Holders generate proofs locally, choose what to reveal, and maintain cryptographic proof of their data without surrendering copies to centralized servers.
+**How it works**:
+1. **Witness** data from any API without storing credentials
+2. **Transform** raw data into structured claims using customizable policies
+3. **Prove** claims are correct using zero-knowledge cryptography
+4. **Issue** portable, verifiable credentials that work everywhere
 
-### 1.4 Vision
+**What this enables**:
+- Insurance companies verify risk without seeing trip locations or sensor data
+- Lenders assess creditworthiness without accessing bank statements
+- Employers check credentials without storing license copies
+- Healthcare systems verify eligibility without centralizing patient records
+- Supply chains prove compliance without exposing supplier relationships
 
-***Bind aims to become the privacy-preserving verification layer for the internet.***
 
-Imagine:
-- **Citizens** verify identity instantly without surrendering personal privacy to governments or corporations. No forged documents. Cryptographic proof.
-- **Patients** verify health-related facts without exposing full medical histories. Vaccination status or eligibility is proven without centralizing sensitive data.
-- **Students** prove their education once across employers, lenders, and licensing bodies. Universities stop answering repeated verification requests.
-- **Workers** prove employment without exposing salary or sensitive HR data. Loan applications and background checks complete in minutes instead of days.
-- **Supply chains** prove authenticity and compliance without revealing trade secrets or competitive data. Manufacturers, distributors, and retailers trust each other cryptographically.
-- **Organizations** collaborate on shared data without trusting centralized intermediaries. Privacy, trust, and decentralization coexist.
+## The Problem
+### Organizations Can't Prove Without Exposing
+Modern businesses need to verify claims to operate, but sharing raw information creates unacceptable risks:
 
-**Core principle**: One attestation. Infinite use cases. Holder control. Complete privacy. Decentralized infrastructure.
+**For Data Providers** (individuals, organizations, platforms):
+- **Privacy erosion**: Proving risk profiles, behavior patterns, or credentials requires sharing granular data (locations, transactions, personal details)
+- **Competitive risk**: Demonstrating compliance, quality, or performance exposes proprietary strategies and trade secrets
+- **Liability accumulation**: Storing copies of sensitive information creates regulatory exposure and breach risk
+- **Vendor lock-in**: Once data is shared, providers lose control over how it's used or who sees it
 
-## 2. How Bind Works
-### 2.1 Three Simple Steps
-#### Step 1: Issuance
-A data issuer (university, employer, government agency, etc.) creates an attestation—a claim about data they have verified. Instead of storing this on a central database, Bind publishes a cryptographic fingerprint (commitment/hash) to the blockchain. The actual data stays private, off-chain.
+**For Data Consumers** (verifiers, underwriters, employers):
+- **Trust without verification**: Must either see everything or trust nothing—no middle ground between full transparency and blind trust
+- **Repeated verification**: Same facts verified independently by every party, multiplying costs and friction
+- **Compliance burden**: Regulations demand proof but prohibit unnecessary data collection and storage
+- **Integration fragmentation**: Every data source requires custom integration, storage infrastructure, and security measures
 
-**What goes on-chain**: A mathematical hash proving "Issuer X has verified data for Holder Y."  
-**What stays private**: The actual data values (e.g., GPA, salary, medical details).
+**The fundamental tradeoff**: Organizations choose between transparency (sharing everything) or opacity (proving nothing). Either accept massive liability from over-collecting data, or operate on blind trust with "trust me bro" claims that can't be verified.
 
-#### Step 2: Claiming
-A holder receives the attestation data off-chain from the issuer. They generate a zero-knowledge proof on their device (typically a few seconds). This proof cryptographically proves:
-- "I own valid data matching this on-chain commitment."  
-- "This data has not been revoked."  
-- "This data has not expired."  
+## The Solution
+Bind eliminates this tradeoff through **attestations**—cryptographic proofs that verify claims about data without exposing the underlying information.
 
-The holder stores this proof privately.
+### How Attestations Work
+An attestation proves: *"I have data from source X that satisfies conditions Y"* without revealing the actual data.
 
-#### Step 3: Verification
-When a holder wants to verify their data (e.g., for a loan, job, or access), they present their zero-knowledge proof to the verifying organization. The verifier checks:
-- Does this proof match the on-chain commitment?  
-- Is this proof valid and unrevoked?  
+**Examples across different domains**:
+**Insurance Risk**
+Instead of: 90 days of GPS coordinates, speeds, accelerometer data
+Attestation proves: "This vehicle had <5% hard braking events over 90 days with 95% confidence"
 
-The verifier never sees the underlying raw data—only that it is valid.
+**Financial Health**
+Instead of: Complete bank statements with every transaction
+Attestation proves: "Monthly income consistently exceeds $5,000 for past 6 months"
 
-**Selective disclosure**: The holder controls which specific data points to reveal.  
-- Example: Prove "has a Bachelor's degree from University X" while hiding GPA.  
-- Example: Prove "employed at Company Y between 2020–2024" while hiding salary.  
+**Professional Credentials**
+Instead of: Copy of medical license with full name, address, license number
+Attestation proves: "Active medical license in cardiology, expires after 2027"
 
-### 2.2 Privacy and Security Built In
-**Privacy principles:**
-- **Data-minimizing by design**: Only cryptographic fingerprints and minimal metadata live on-chain. Raw sensitive data never appears on any public ledger.
-- **Holder-centric**: The holder's device is the locus of control for proofs and disclosure decisions. No central server stores user data or tracks proof usage.
-- **Selective disclosure**: Every verification can be tailored to expose only what is strictly necessary. Users decide field-level what to share.
-- **Issuer privacy** (envelope flow): Issuers can issue attestations without knowing which wallet or person will ultimately claim them. Perfect privacy during issuance.
+**Compliance Status**
+Instead of: Exposing supplier relationships, pricing, and internal processes
+Attestation proves: "Product meets ISO 9001 certification requirements"
 
-**Security principles:**
-- **Issuer accountability**: Only approved issuers can create attestations for each schema type. Bad actors can be removed by governance.
-- **Revocation**: Issuers can revoke attestations, and revoked entries automatically fail verification.
-- **No single point of failure**: On-chain logic, decentralized governance, and local proof generation reduce reliance on centralized servers.
-- **Auditable design**: The protocol design and governance decisions are transparent and can be reviewed by the community and third-party auditors.
-- **Cryptographic soundness**: Proofs are mathematically proven correct. Forging a proof is computationally infeasible.
+The verifier can cryptographically confirm the proof is valid without ever seeing trip data, transaction history, license numbers, or proprietary processes.
 
-## 3. System Architecture
-**Bind** operates across three conceptual layers. While the conceptual design is chain-agnostic, the current implementation runs on zkVerify and is intended to migrate to Aztec when feasible.
+### The Bind Stack
+Bind provides the full infrastructure to create and verify attestations:
 
-### 3.1 On-Chain Layer (Registry)
-**Purpose**: Provide a shared "truth layer" for attestations.
+```
+┌─────────────────────────────────────────────────────┐
+│  1. WITNESS DATA (zkTLS)                            │
+│  Cryptographically prove data came from specific    │
+│  APIs without storing credentials or raw data       │
+└─────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────┐
+│  2. APPLY POLICIES                                  │
+│  Transform witnessed data into business-relevant    │
+│  outputs using customizable evaluation logic        │
+└─────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────┐
+│  3. GENERATE PROOFS                                 │
+│  Create zero-knowledge cryptographic proofs that    │
+│  computation was performed correctly                │
+└─────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────┐
+│  4. ISSUE CREDENTIALS                               │
+│  Package as W3C Verifiable Credentials that can     │
+│  be verified by anyone, anywhere                    │
+└─────────────────────────────────────────────────────┘
+```
 
-This layer stores:
-- **Attestation commitments**: Cryptographic hashes that represent verified data.  
-- **Schemas**: Definitions of what fields each attestation type contains (e.g., EDUCATION, EMPLOYMENT, SUPPLY_CHAIN).  
-- **Issuer lists**: Which organizations are authorized to issue which schema types.  
-- **Revocation records**: Whether specific attestations have been revoked.  
+### What Makes Bind Different
+**vs. Traditional Verification**:
+- Cryptographic proofs instead of "trust me" claims
+- Selective disclosure instead of full data exposure
+- Reusable credentials instead of repeated verification at every interaction
+- Privacy-preserving by design, not as afterthought
 
-This layer does **not** store raw personal data. It only stores the minimum cryptographic information needed to verify proofs.
+**vs. Other Privacy Tech**:
+- Full-stack solution (witness → policy → proof → credential)
+- Works with existing APIs (no data source integration required)
+- Enterprise service model (no DIY cryptography or circuit writing)
+- Policy templates for common use cases (not just raw zero-knowledge circuits)
 
-### 3.2 Holder Layer (User Devices)
-**Purpose**: Give holders full control over their proofs and privacy.
+**vs. Blockchain Identity**:
+- Automated attestation from any data source (not just manual credential issuance)
+- Proves claims about behavior, risk, compliance—not just identity attributes
+- Immediate enterprise value (production infrastructure today)
+- Clear path to decentralization (start centralized, progressively open)
+- Standards-based output (W3C credentials work everywhere)
 
-On the holder's device:
-- Attestation data is received from issuers via secure off-chain channels.  
-- Zero-knowledge proofs are generated locally, using Bind's proving logic.  
-- The holder chooses what to prove and what to reveal each time.  
+## Use Cases
+### Insurance: Behavior-Based Underwriting
+**Problem**: Usage-based insurance requires sharing granular telematics data (trip locations, speeds, driving patterns), which customers resist due to privacy concerns. Alternative: Generic risk pools with no personalization or "trust me" scores with no transparency.
 
-No central server ever needs to store full user data or proofs.
+**With Bind**:
+- Connected vehicles generate attestations proving safe driving patterns from telematics data
+- Credentials show risk tier (LOW/MEDIUM/HIGH) and confidence score
+- Insurance companies verify cryptographic proofs without accessing trip data
+- Drivers control when to share credentials and with whom
+- Policy logic is transparent (drivers understand how risk is calculated)
 
-### 3.3 Integration Layer (Apps and Services)
-**Purpose**: Make Bind usable by real-world systems.
+**Value**: Privacy-preserving usage-based insurance unlocks new products, increases customer adoption, enables personalized pricing without surveillance.
 
-- **Web3 dapps** can verify proofs directly against the on-chain registry.  
-- **Web2 services** (banks, HR systems, SaaS platforms) integrate via REST APIs, sending proofs to a verification service that checks against the on-chain registry.  
+### Finance: Creditworthiness Verification
+**Problem**: Lenders need to verify income stability and spending patterns, but borrowers won't share raw bank statements exposing every transaction. Alternative: Opaque credit scores controlled by bureaus with no user control or transparency.
 
-This layer allows Bind to plug into existing workflows with minimal disruption.
+**With Bind**:
+- Banking APIs generate attestations proving income stability, debt-to-income ratios, savings patterns
+- Credentials show financial health score or income bands without revealing individual transactions
+- Lenders verify proofs without accessing accounts or storing sensitive financial data
+- Borrowers present same credential to multiple lenders without repeated verification
+- Portable financial reputation that users control
 
-## 4. Types of Data Verified (Schemas)
-Bind is **schema-agnostic**: any structured data can be modeled.
+**Value**: Faster loan approval, reduced fraud, better privacy for borrowers, lower verification costs.
 
-Examples:
-- **Educational**: University, degree, graduation date, GPA (optional/hidden), program, honors.  
-- **Employment**: Company, title, start/end dates, department, compensation range (often hidden), performance indicators.  
-- **Supply Chain**: Product ID, origin, certifications, handling data, timestamps, temperature logs.  
-- **Medical**: Vaccination status, blood type, allergies, key lab results (with strict selective disclosure).  
-- **Identity**: Age, nationality, residency status, document validity (without exposing full identity details).  
-- **IoT/Sensor Data**: Device ID, calibration status, reading ranges, timestamps.  
-- **Property/Assets**: Ownership, address or asset ID, valuation range, lien status.  
+### Employment: Credential Verification
+**Problem**: Employers must verify professional licenses, degrees, and certifications but face liability storing copies with sensitive personal information. Manual verification is slow, expensive, and error-prone.
 
-Schemas can be standardized and governed by the Bind community so that verifiers across industries can rely on consistent formats.
+**With Bind**:
+- Licensing boards, universities, certification bodies generate attestations
+- Credentials prove active status, specialties, expiration dates without license numbers or personal details
+- Employers verify proofs instantly without storing sensitive documents
+- Professionals present portable credentials across jobs, states, and industries
+- No more manual verification calls or waiting for transcripts
 
-## 5. Governance and Economics (Conceptual)
-- **DAO governance**:  
-  - Manages schemas, issuer lists, and protocol upgrades.  
-  - Can pause parts of the system in emergencies.  
-- **Economic model** (to be finalized):  
-  - Small fees for issuing, claiming, and verifying attestations.  
-  - Fees fund protocol maintenance, audits, and ecosystem development.  
-  - Potential incentives for early issuers, integrators, and ecosystem contributors.  
+**Value**: Reduced liability, instant verification, portable professional reputation, faster hiring cycles.
 
-Details of the DAO structure and token mechanics are intentionally left as open questions to be validated with partners.
+### Healthcare: Provider Credentials & Patient Eligibility
+**Problem**: Verifying medical licenses and patient insurance eligibility creates centralized repositories of sensitive health data. HIPAA violations are costly. Telemedicine across state lines requires multi-state license verification.
 
-## 6. Roadmap (Conceptual)
-- **Phase 1 – Pilot on zkVerify**:  
-  - Deploy core Bind contracts and proof verification on zkVerify.  
-  - Run pilot integrations with selected issuers and verifiers.  
-  - Prove concept and refine protocols based on real-world feedback.  
+**With Bind**:
+- Medical boards generate attestations for active licenses in each jurisdiction
+- Insurance systems generate attestations for coverage eligibility
+- Providers verify both instantly without storing medical records or license copies
+- HIPAA compliance through minimal data exposure
+- Enable cross-state telemedicine with portable license credentials
 
-- **Phase 2 – Dual-Home / Migration Preparation**:  
-  - Align proof formats and contracts with Aztec's stack.  
-  - Begin mirroring commitments and revocations from zkVerify to Aztec testnet.  
-  - Expand schemas and integrations (medical, government, IoT).  
+**Value**: Regulatory compliance, reduced verification burden, enable telemedicine, minimize breach risk.
 
-- **Phase 3 – Primary Deployment on Aztec**:  
-  - Switch primary issuance and verification flows to Aztec mainnet.  
-  - Mature governance, broader ecosystem adoption, and cross-industry standardization.  
-  - Maintain zkVerify as an archival / interoperability layer if needed.  
+### Supply Chain: Product Provenance & Compliance
+**Problem**: Proving product authenticity, ethical sourcing, or regulatory compliance requires exposing supplier relationships, pricing, and trade secrets. Counterfeits thrive because verification is difficult. "Trust me" sustainability claims aren't verifiable.
 
-## 7. Conclusion
-Data verification today is repeated, invasive, and centralized. Users' and companies sensitive information is scattered across dozens of organizations, each with different security standards, creating a massive attack surface and privacy risk.
+**With Bind**:
+- Tracking systems, certification bodies, auditors generate attestations
+- Credentials prove compliance standards, origin requirements, handling certifications
+- Buyers verify authenticity without accessing supplier networks or pricing
+- Sellers protect competitive information while demonstrating quality
+- Verifiable sustainability claims (not just marketing)
 
-**Bind** addresses this by enabling:
-- **Reusable verification**: One proof, many contexts. Stop re-verifying the same data over and over.
-- **Privacy by design**: Raw data remains off-chain and under holder control. Only cryptographic proofs and commitments are public.
-- **User ownership**: Holders decide what to reveal, when, and to whom. Field-level control over every disclosure.
-- **Universal applicability**: Works across industries and data types—from education and employment to supply chains and IoT.
-- **Decentralized trust**: No single entity controls the verification layer. Community governs schemas, issuers, and protocol evolution.
+**Value**: Combat counterfeiting, prove compliance, protect trade secrets, build consumer trust.
 
-**The result**: A world where data is verified once and trusted everywhere, while users maintain complete privacy control.
+### Enterprise Compliance: Regulatory Reporting
+**Problem**: Demonstrating regulatory compliance (SOC 2, GDPR, HIPAA, financial regulations) requires exposing internal processes, data handling procedures, and sometimes customer information to auditors. This creates risk and slows audits.
 
-Bind is the infrastructure for a privacy-first data economy where verification is efficient, privacy is guaranteed, and holders are in control.
+**With Bind**:
+- Internal systems generate attestations proving compliance with specific controls
+- Credentials show audit status, control effectiveness, compliance windows
+- Auditors and regulators verify proofs without accessing production systems or customer data
+- Continuous compliance monitoring instead of annual audit theater
 
-## Appendix: Glossary
-- **Attestation**: A verified claim by an issuer about some data (e.g., a degree, employment history, product origin).
-- **Bind**: The protocol that "binds" verified data to the blockchain for reusable, privacy-preserving verification.
-- **Commitment (hash)**: A one-way cryptographic fingerprint of data that proves it exists without revealing it.
-- **Data point**: Specific field within a dataset (e.g., university name, start date, nationality).
-- **Envelope**: Optional flow where issuers share data and a secret with holders without knowing their address.
-- **Merkle root**: A compact cryptographic summary of many data items, used for efficient verification.
-- **Noir**: A language and toolkit used to create zero-knowledge proof programs.
-- **Zero-knowledge proof (ZKP)**: A proof that you know something (or that something is true) without revealing the thing itself.
-- **Schema**: A structured definition of what fields an attestation contains.
-- **Selective disclosure**: Ability for a user to reveal some fields while keeping others hidden in a proof.
+**Value**: Faster audits, reduced risk exposure, continuous compliance verification, lower audit costs.
+
+### Identity Verification: Age, Residency, Credentials
+**Problem**: Proving identity attributes (age, residency, citizenship) requires exposing full government IDs with unnecessary personal information. Every website stores copies, creating massive liability and breach risk.
+
+**With Bind**:
+- Government ID APIs or existing credential providers generate attestations
+- Credentials prove specific claims: "over 21", "resident of California", "licensed professional"
+- Merchants verify proofs without seeing or storing birthdates, addresses, or ID numbers
+- Users reuse the same credential across thousands of verifiers
+
+**Value**: Eliminate over-collection, reduce breach surface area, maintain user privacy while ensuring compliance.
+
+## Technology Overview
+### Core Components
+**zkTLS Witnessing**
+Cryptographic proxy that witnesses HTTPS API traffic, creating signed attestations of responses without storing credentials. Proves data came from the claimed source (telematics platform, bank API, government system, employer database) without requiring the source to integrate with Bind.
+
+**Policy Engine**
+Customizable business logic that transforms raw data into structured claims. Policies are:
+- **Deterministic**: Same inputs always produce same outputs
+- **Versioned**: Changes create new policy versions, old credentials stay valid
+- **Public specification**: What's being proven (e.g., "risk score calculation using braking events and speed variance")
+- **Private computation**: How it's proven (implementation details) stays hidden in zero-knowledge proof
+
+Examples: Risk scoring models, income band classification, credential status validation, compliance rule evaluation.
+
+**Zero-Knowledge Proofs**
+Cryptographic proofs that policies were executed correctly without revealing inputs or computation details. Uses Noir circuits with Barretenberg proving system. Verifiers don't trust Bind or the data source—they verify the mathematical proof. The attestation either proves the claim or it doesn't. No "trust me bro."
+
+**Verifiable Credentials**
+W3C-standard credentials signed with cryptographic keys, enabling independent verification. Portable across platforms and applications. Standards-based verification means credentials work everywhere. No vendor lock-in.
+
+### Privacy Properties
+**What verifiers see**:
+- Policy output (risk score, income band, credential status, compliance result)
+- Policy identifier (which rules were evaluated)
+- Timestamp (when attestation was created)
+- Cryptographic proof that claim is valid
+
+**What verifiers don't see**:
+- Raw data from APIs (no trip locations, transactions, license numbers, sensor readings)
+- Intermediate computation steps
+- Policy implementation details (the "how" of the calculation)
+- Any data not directly necessary to verify the specific claim
+
+**What Bind sees** (centralized, current):
+- Raw API data during brief 5-minute session
+- Policy evaluation (encrypted)
+- Proof generation requests
+- Nothing stored long-term (automatic deletion after session)
+
+**What Bind will see** (decentralized, future):
+- Nothing—users generate proofs locally on their own devices
+- Bind becomes infrastructure provider, not data processor
+
+### Security Model
+**Cryptographic foundations**:
+- Ed25519 signatures for attestations and credentials
+- Zero-knowledge proofs for computation correctness (not trust-based)
+- TLS witnessing for data provenance
+- Standards-based verification (W3C Verifiable Credentials, JWKS)
+
+**Infrastructure security**:
+- AWS KMS for key management
+- Encrypted storage for credentials
+- 5-minute TTL for sensitive sessions (automatic deletion)
+- No long-term PII storage (we don't want it, don't keep it)
+
+**Threat model**:
+- **Protects against**: Data breaches at verifiers (they don't have raw data), over-collection, surveillance, "trust me" claims
+- **Does not protect against**: Compromised data sources (garbage in, garbage out), user device compromise (malware stealing credentials), coerced disclosure (forced to present credentials)
+
+## Architecture Path
+### Phase 1: Centralized Service
+Bind operates as a managed attestation service:
+
+- **Enterprise focus**: Organizations create policies and issue credentials
+- **API integration**: Simple SDK for platforms and developers
+- **Full-stack solution**: Bind handles witnessing, proving, issuance, verification
+- **Clear value**: Privacy-preserving verification without managing cryptography
+
+**Why centralized first**: Prove the model with real customers, validate unit economics, iterate quickly on product, build developer ecosystem.
+
+### Phase 2-3: Progressive Decentralization
+Bind evolves into an open verification ecosystem:
+
+- **Holder-controlled**: Users generate proofs on their own devices (browser, mobile, hardware wallets)
+- **On-chain commitments**: Attestations anchored as cryptographic hashes on privacy-focused L1/L2
+- **Public registries**: Open schema definitions and policy templates (IPFS/Arweave)
+- **DAO governance**: Community manages issuers, schemas, protocol upgrades
+- **Multi-issuer**: Bind becomes one attestation provider among many
+
+**Migration path**:
+1. **Dual-home**: Mirror attestations to privacy-focused blockchain testnet
+2. **Open-source**: Release prover libraries and holder SDK
+3. **DAO formation**: Community governance for schemas and issuers
+4. **Full decentralization**: Holders control proofs, Bind operates protocol nodes
+
+**Why this path**: Decentralization is the end goal, but we're building the centralized service that proves attestations work at scale first. This ensures we solve real problems with sustainable economics before decentralizing.
+
+## Target Customers
+### Primary: Data Consumers (Verifiers)
+Organizations that need to **verify** claims about data but don't monetize **storing** raw data:
+
+- **Insurance companies**: Verify risk without storing telematics or health data
+- **Lenders**: Assess creditworthiness without accessing accounts
+- **Employers**: Check credentials without storing license copies
+- **Healthcare systems**: Verify eligibility without centralizing patient records
+- **Supply chain buyers**: Verify provenance without accessing supplier networks
+- **Regulators & auditors**: Verify compliance without production system access
+
+**Their problem**: Verification requires either storing sensitive data (creating liability) or accepting "trust me" claims (enabling fraud), while users/providers resist sharing raw data due to privacy concerns.
+
+### Secondary: Ecosystem Platforms
+Platforms that monetize **network effects**, not **data sales**:
+
+- **IoT platforms**: Enable privacy-preserving data portability for connected devices
+- **Web3 protocols**: Unlock adoption through selective disclosure and verifiable claims
+- **Developer platforms**: Provide attestation infrastructure for ecosystem partners
+- **Identity networks**: Offer privacy-preserving verification services
+
+**Their problem**: Privacy concerns limit adoption; users want control over their data without sacrificing verifiability. Platforms need to enable value creation without becoming custodians of massive PII repositories.
+
+## Business Model
+### Revenue Streams
+**Platform Partners** (IoT platforms, Web3 protocols, developer ecosystems):
+- Usage-based pricing with volume discounts
+- Partners integrate Bind SDK, provide distribution to their developers
+- Bind bills based on attestations generated
+- Pricing: $0.10 - $0.25 per attestation at scale
+- Example: Connected vehicle platform with 100K devices
+
+**Enterprise Direct** (Insurance, finance, healthcare, supply chain):
+- Tiered subscriptions: $5K - $35K/month base fee
+- Includes attestation allowances, custom policies, dedicated support
+- Implementation services: $50K - $500K for custom integrations and policy development
+- White-label options and custom SLAs available
+- Example: Insurance underwriter verifying risk across customer base
+
+**Self-Service Developers** (Startups, small businesses, individual developers):
+- Freemium: 250 attestations/month free
+- Pay-as-you-go: Volume-based pricing after free tier
+- Business tier: $2K/month with larger allowances
+- Example: Age verification for content sites, credential checks for gig platforms
+
+### Unit Economics
+
+**Target pricing**: $0.10 - $0.25 per attestation at scale
+**Volume discounts**: Decreasing cost per attestation as volume increases
+**Margin profile**: 33% - 80% depending on volume and customer tier
+**Economic model**: Profitable unit economics from initial scale across all customer segments
+
+## Roadmap
+### Phase 1: Prove the Model
+**Focus**: Validate the attestation model with initial customers across verticals
+
+- Complete customer pilots demonstrating privacy-preserving verification
+- Generate production attestations at scale
+- Validate SDK integration and developer experience
+- Demonstrate value proposition across use cases (insurance, finance, credentials)
+- Build reference customers and case studies
+
+### Phase 2: Platform Expansion
+**Focus**: Scale across multiple verticals and build developer ecosystem
+
+- Expand to additional platform partners in different industries
+- Develop vertical-specific policy templates (risk scoring, credential checks, compliance)
+- Build developer community and ecosystem (documentation, SDKs, examples)
+- Launch self-service developer tier with freemium model
+- Reach profitability at company level
+
+### Phase 3: Enterprise Maturity & Decentralization
+**Focus**: Scale enterprise adoption and begin protocol decentralization
+
+- Scale enterprise direct sales across industries
+- Expand geographic presence globally
+- Open-source core components and prover libraries
+- Begin decentralization research (Aztec testnet integration, DAO exploration)
+- Release holder SDK for client-side proof generation
+
+## Governance & Economics
+**Our approach**: Start centralized to prove the model, progressively decentralize to become a community-governed protocol.
+
+**Phase 1 - Centralized Service**: Bind operates as managed SaaS. We control schema definitions, issuer certification, infrastructure, and pricing. This lets us move fast, validate the model with real customers, and build sustainable unit economics.
+
+**Phase 2 - Begin Decentralization**: Open-source core components, start migrating to decentralized protocol, explore DAO governance models. Transition from service provider to protocol operator.
+
+**Phase 3 - Full Decentralization**: Community governs through DAO (schema approvals, issuer certification, protocol upgrades). Token mechanics for governance, staking, and ecosystem incentives. Bind becomes one attestation provider among many in an open ecosystem.
+
+**Why this path**: Decentralization is the end goal, but we're building the centralized service that proves attestations work at scale first, then progressively open-sourcing and decentralizing once the model is validated with real revenue and customers.
+
+## Conclusion
+**Organizations can't prove claims about their data without exposing it. This creates privacy risks, compliance burdens, competitive disadvantages, and vendor lock-in.**
+
+**Bind eliminates this tradeoff** through zero-knowledge attestations—cryptographic proofs that verify claims while preserving privacy.
+
+**What we enable**:
+- Verify risk without seeing underlying sensor data or behavior patterns
+- Assess creditworthiness without accessing transaction history
+- Check credentials without storing copies of licenses or certificates
+- Prove compliance without exposing trade secrets or supplier relationships
+- Confirm identity attributes without collecting full government IDs
+
+**Why this matters**:
+- Privacy regulations make data exposure increasingly costly (GDPR, CCPA, HIPAA fines)
+- Zero-knowledge cryptography is production-ready with mature tooling
+- Enterprise demand for verification without liability is growing
+- Open standards enable interoperability (W3C Verifiable Credentials)
+- Data breaches are epidemic—organizations want verification without custodianship
+
+**Our approach**:
+- **Near-term**: Managed service proving the model with real customers and sustainable economics
+- **Long-term**: Decentralized protocol with holder-controlled proofs and DAO governance
+- **Core principle**: Start centralized to deliver immediate value, progressively decentralize once validated
+
+**Join us**: We're partnering with platforms, enterprises, and ecosystem contributors who need privacy-preserving verification. Whether you're underwriting risk, verifying credentials, assessing creditworthiness, or proving compliance, Bind provides the attestation infrastructure.
+
+**Contact**: partnerships@bindprotocol.xyz
+
+---
+
+## Appendix: Key Terms
+
+**Attestation**: Cryptographic proof that verifies a claim about data without revealing the underlying information. Example: "Low risk driver" without showing trip locations.
+
+**Policy**: Customizable business logic that transforms raw data into structured claims. Deterministic, versioned, transparent about what's proven while keeping computation private.
+
+**Verifiable Credential (VC)**: W3C standard for digitally signed credentials that can be cryptographically verified by any party. Portable, reusable, standards-based.
+
+**Zero-Knowledge Proof (ZKP)**: Cryptographic method to prove a statement is true without revealing any information beyond the statement's validity. Not trust-based—mathematically verifiable.
+
+**zkTLS**: Technique for cryptographically witnessing HTTPS API traffic without storing credentials or requiring data source integration. Proves data provenance.
+
+**Selective Disclosure**: Revealing only the specific information needed for verification, nothing more. Prove you're low risk without showing every trip. Prove income threshold without showing every transaction.
+
+**W3C Verifiable Credentials**: Open standard for digital credentials ensuring portability and interoperability. No vendor lock-in—credentials work everywhere.
