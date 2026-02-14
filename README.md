@@ -1,27 +1,17 @@
 # Bind Protocol
 **Privacy-Preserving Attestation for the Data Economy**
-
 January 2026
 Michael Kerr, Jason Child
 
 ---
 ## Executive Summary
-Organizations face a fundamental problem: proving facts about their data requires exposing sensitive information, creating privacy risks, compliance burdens, and competitive disadvantages.
+Bind Protocol is a managed attestation platform that lets organizations cryptographically verify claims about data without exposing the underlying information. It combines zkTLS data witnessing, a deterministic policy engine, zero-knowledge proof generation, and W3C Verifiable Credential issuance into a single API.
 
-**Bind Protocol** solves this through **zero-knowledge attestations**—cryptographic proofs that verify claims about data without revealing the underlying information.
+The system operates in four stages. It witnesses structured data from HTTPS APIs using zkTLS, establishing provenance without persisting credentials or raw payloads. It evaluates the witnessed data against a deterministic, versioned policy — a declarative specification that maps raw inputs to structured claims such as risk classification, income band, or credential status. It generates a zero-knowledge proof (Noir/Barretenberg) attesting that the policy was executed correctly over the witnessed data. And it packages the result as a W3C Verifiable Credential, independently verifiable by any relying party without contacting the issuer or the original data source.
 
-**How it works**:
-1. **Witness** data from any API without storing credentials
-2. **Transform** raw data into structured claims using customizable policies
-3. **Prove** claims are correct using zero-knowledge cryptography
-4. **Issue** portable, verifiable credentials that work everywhere
+The core property is separation of verification from exposure: a verifier receives a mathematically sound guarantee that a claim holds, while the data subject retains full confidentiality over the inputs. No raw data is transmitted to, stored by, or accessible to the verifier at any point in the process.
 
-**What this enables**:
-- Insurance companies verify risk without seeing trip locations or sensor data
-- Lenders assess creditworthiness without accessing bank statements
-- Employers check credentials without storing license copies
-- Healthcare systems verify eligibility without centralizing patient records
-- Supply chains prove compliance without exposing supplier relationships
+Target applications include behavior-based insurance underwriting, creditworthiness assessment, professional credential verification, healthcare eligibility checks, and regulatory compliance attestation. Bind operates as a centralized managed service today, with an architecture designed for progressive decentralization — including client-side proof generation and community governance — as adoption matures.
 
 
 ## The Problem
